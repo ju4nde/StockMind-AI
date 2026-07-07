@@ -16,17 +16,15 @@ class TextState(rx.State):
 
     @rx.event
     def handle_typing(self, value: str):
-        self.text = value
-        
         if len(value) < 1:
             self.suggestions = []
             return
         
         self.suggestions = [
             stock for stock in ALL_TICKERS
-            if value.lower() in stock.get("Symbol", "").lower() 
-            or value.lower() in stock.get("Security Name", "").lower()
-        ][:5]  
+            if stock.get("Symbol", "").lower().startswith(value) 
+            or stock.get("Security Name", "").lower().startswith(value)
+        ][:5]
 
     @rx.event
     def send_to_ai(self, form_data: dict):

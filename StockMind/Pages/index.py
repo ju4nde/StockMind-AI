@@ -74,9 +74,10 @@ def index() -> rx.Component:
                         rx.hstack(
                             rx.text(item["Symbol"]),
                             rx.text("-"),
-                            rx.text(item["Security Name"])
-                        )
-                    ),
+                            rx.text(item["Security Name"]),
+                            _hover={"bg": "#b469fa", "width": "100%", "cursor": "pointer"}
+                        ),
+                    ),  
                     border="2px solid #6a27a8",
                     border_radius="0px 0px 16px 16px",
                     width="100%",   
