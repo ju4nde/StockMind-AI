@@ -72,9 +72,9 @@ def index() -> rx.Component:
                         TextState.suggestions,
                         lambda item: 
                         rx.hstack(
-                            rx.text(item["Symbol"]),
+                            rx.text(item["ticker"]),
                             rx.text("-"),
-                            rx.text(item["Security Name"]),
+                            rx.text(item["title"]),
                             _hover={"bg": "#b469fa", "width": "100%", "cursor": "pointer"}
                         ),
                     ),  
