@@ -7,6 +7,16 @@ class TextState(rx.State):
     suggestions: list[dict] = []
 
     @rx.event
+    def click_suggestion(self, clicked_ticker: str):
+        self.text = clicked_ticker
+         
+        return rx.redirect("/a")
+    @rx.event
+    def clean_list(self):
+        self.suggestions=[]
+
+
+    @rx.event
     def set_focus(self):
         self.is_focused = True
 
@@ -16,6 +26,7 @@ class TextState(rx.State):
 
     @rx.event
     def handle_typing(self, value: str):
+        self.text = value
         if len(value) < 1:
             self.suggestions = []
             return
@@ -24,7 +35,7 @@ class TextState(rx.State):
             stock for stock in ALL_TICKERS.values()
             if stock.get("ticker", "").lower().startswith(value) 
             or stock.get("title", "").lower().startswith(value)
-        ][:5]
+        ][:3]
 
     @rx.event
     def send_to_ai(self, form_data: dict):

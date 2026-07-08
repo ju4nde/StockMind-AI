@@ -64,6 +64,7 @@ def index() -> rx.Component:
                 border_bottom=rx.cond(TextState.suggestions, "none", "3px solid #6a27a8"),
                 outline="none",
                 box_shadow="none",
+                value = TextState.text
             ),
             rx.cond(
                 TextState.suggestions,
@@ -72,10 +73,20 @@ def index() -> rx.Component:
                         TextState.suggestions,
                         lambda item: 
                         rx.hstack(
-                            rx.text(item["ticker"]),
-                            rx.text("-"),
-                            rx.text(item["title"]),
-                            _hover={"bg": "#b469fa", "width": "100%", "cursor": "pointer"}
+                            rx.text(
+                                item["ticker"],
+                                color="#7e6396",
+                                ),
+                            rx.spacer(),
+                            rx.text(
+                                item["title"],
+                                color="#79757d",
+                                ),
+                            width="100%", 
+                            justify_content="space_between",
+                            padding="4px",    
+                            _hover={"bg": "#b469fa", "cursor": "pointer"},
+                            on_click=lambda _: TextState.click_suggestion(item["ticker"])
                         ),
                     ),  
                     border="2px solid #6a27a8",
@@ -90,8 +101,9 @@ def index() -> rx.Component:
                     border_top="none",
                     border_top_radius="10px",
                     padding="5px",
-
-                )
+                    transform="translateZ(0)"
+                ),
+                
             ),
             on_submit=TextState.send_to_ai,
             position="relative",
