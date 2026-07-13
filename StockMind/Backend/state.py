@@ -33,8 +33,8 @@ class TextState(rx.State):
         
         self.suggestions = [
             stock for stock in ALL_TICKERS.values()
-            if stock.get("ticker", "").lower().startswith(value) 
-            or stock.get("title", "").lower().startswith(value)
+            if stock.get("ticker", "").lower().startswith(value.lower()) 
+            or value.lower() in stock.get("title", "").lower()
         ][:3]
 
     @rx.event
