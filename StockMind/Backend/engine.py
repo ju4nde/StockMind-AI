@@ -1,6 +1,11 @@
 import yfinance as yf
 import pandas as pd
 import pandas_ta as ta
+import torch
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+
+FINBERT_TOKENIZER = AutoTokenizer.from_pretrained("ProsusAI/finbert")
+FINBERT_MODEL = AutoModelForSequenceClassification.from_pretrained("ProsusAI/finbert")
 
 
 def get_indicators(ticker_symbol: str) -> dict:
@@ -35,8 +40,42 @@ def get_indicators(ticker_symbol: str) -> dict:
         return {"error": f"An error occurred while processing data: {str(e)}"}
 
 
-# TEMPORARY TEST BLOCK - Remove or comment out later
+def analyze_sentiment(headline:str) -> float:
+    try:
+        inputs = FINBERT_TOKENIZER(headline, return_tensors="pt",padding=True,truncation= True)
+
+        with torch.no_grad():
+            outputs = FINBERT_MODEL(**inputs)
+        
+
+        predictions = torch.nn.functional.softmax(outputs.logits, dim=-1)
+        pos_prob = float(predictions[0][0])
+        neg_prob = float(predictions[0][1])
+        neu_prob = float(predictions[0][2])
+        
+        compound_score= pos_prob - neg_prob
+
+        return round(compound_score, 4)
+
+    except Exception as e:
+        print(f"Sentiment analysis error: {str(e)}")
+        return 0.0
+
+
+
+
+
+
 if __name__ == "__main__":
-    print("Testing Market Data Engine...")
-    test_data = get_indicators("AAPL")
-    print(test_data)
+    print("\n--- Testing Market Data Engine ---")
+    print(get_indicators("AAPL"))
+    
+    print("\n--- Testing Sentiment Engine (FinBERT) ---")
+    good_news = "Apple quarterly profits smash expectations, setting new revenue record."
+    bad_news = "Antitrust lawsuit filed against Apple threatens App Store ecosystem."
+    
+    print(f"Headline: '{good_news}'")
+    print(f"AI Score: {analyze_sentiment(good_news)}") 
+    
+    print(f"Headline: '{bad_news}'")
+    print(f"AI Score: {analyze_sentiment(bad_news)}") 
