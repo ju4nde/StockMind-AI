@@ -3,9 +3,22 @@ import pandas as pd
 import pandas_ta as ta
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
+import numpy as np
+import joblib
+import os
 
 FINBERT_TOKENIZER = AutoTokenizer.from_pretrained("ProsusAI/finbert")
 FINBERT_MODEL = AutoModelForSequenceClassification.from_pretrained("ProsusAI/finbert")
+current_dir = os.path.dirname(__file__)
+MODEL_PATH= os.path.join(current_dir,"stockmind.joblib")
+
+try:
+    ML_CLASSIFIER = joblib.load(MODEL_PATH)
+    print("Model succesfully loaded")
+except FileNotFoundError:
+    print("stockmind.joblib not found")
+    ML_CLASSIFIER= None
+
 
 
 def get_indicators(ticker_symbol: str) -> dict:
@@ -60,6 +73,31 @@ def analyze_sentiment(headline:str) -> float:
     except Exception as e:
         print(f"Sentiment analysis error: {str(e)}")
         return 0.0
+
+def generate_signal(ticker_symbol: str, headline: str ) -> dict:
+    ticker_data = get_indicators(ticker_symbol)
+    if "error" in ticker_data:
+        return ticker_data
+    
+    sentiment_score= analyze_sentiment(headline)
+    trend_flag= 1 if ticker_data["trend"] == "Uptrend" else 0
+    live_features= np.array([[ticker_data["rsi"],sentiment_score, trend_flag]])
+    prediction = ML_CLASSIFIER.predict(live_features)[0]
+    confidence = ML_CLASSIFIER.predict_proba(live_features)[0]
+
+    signal_map={1:"BUY", -1: "SELL", 0: "HOLD"}
+
+    return {
+        "ticker": ticker_data["ticker"],
+        "price": ticker_data["current_price"],
+        "rsi": ticker_data["rsi"],
+        "trend": ticker_data["trend"],
+        "sentiment": sentiment_score,
+        "signal": signal_map[prediction],
+        "confidence_hold": round(float(confidence[0]),2),
+        "confidence_sell":round(float(confidence[1]),2),
+        "confidence_buy":round(float(confidence[2]),2)
+    }
 
 
 
