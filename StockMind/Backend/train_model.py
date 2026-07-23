@@ -22,7 +22,7 @@ def build_model():
     ])
     y_train = np.array([1,1,1,-1,-1,-1,0,0,0])
 
-    model=LogisticRegression()
+    model=LogisticRegression(max_iter=1000)
     model.fit(x_train, y_train)
 
     current_dir= os.path.dirname(__file__)

@@ -7,10 +7,13 @@ import numpy as np
 import joblib
 import os
 
-FINBERT_TOKENIZER = AutoTokenizer.from_pretrained("ProsusAI/finbert")
-FINBERT_MODEL = AutoModelForSequenceClassification.from_pretrained("ProsusAI/finbert")
 current_dir = os.path.dirname(__file__)
 MODEL_PATH= os.path.join(current_dir,"stockmind.joblib")
+FINBERT_PATH = os.path.join(current_dir,"local_finbert")
+
+FINBERT_TOKENIZER = AutoTokenizer.from_pretrained(FINBERT_PATH)
+FINBERT_MODEL = AutoModelForSequenceClassification.from_pretrained(FINBERT_PATH)
+
 
 try:
     ML_CLASSIFIER = joblib.load(MODEL_PATH)
@@ -94,8 +97,8 @@ def generate_signal(ticker_symbol: str, headline: str ) -> dict:
         "trend": ticker_data["trend"],
         "sentiment": sentiment_score,
         "signal": signal_map[prediction],
-        "confidence_hold": round(float(confidence[0]),2),
-        "confidence_sell":round(float(confidence[1]),2),
+        "confidence_sell": round(float(confidence[0]),2),
+        "confidence_hold":round(float(confidence[1]),2),
         "confidence_buy":round(float(confidence[2]),2)
     }
 
@@ -106,14 +109,5 @@ def generate_signal(ticker_symbol: str, headline: str ) -> dict:
 
 if __name__ == "__main__":
     print("\n--- Testing Market Data Engine ---")
-    print(get_indicators("AAPL"))
-    
-    print("\n--- Testing Sentiment Engine (FinBERT) ---")
-    good_news = "Apple quarterly profits smash expectations, setting new revenue record."
     bad_news = "Antitrust lawsuit filed against Apple threatens App Store ecosystem."
-    
-    print(f"Headline: '{good_news}'")
-    print(f"AI Score: {analyze_sentiment(good_news)}") 
-    
-    print(f"Headline: '{bad_news}'")
-    print(f"AI Score: {analyze_sentiment(bad_news)}") 
+    print(generate_signal("AAPL", bad_news))

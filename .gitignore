@@ -6,3 +6,6 @@ __pycache__/
 .web
 .env
 .DS_Store
+*.joblib
+*.pkl
+StockMind/Backend/local_finbert/
