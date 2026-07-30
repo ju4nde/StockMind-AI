@@ -1,6 +1,7 @@
 import reflex as rx
 from ..Backend.state import TextState
 
+
 def index() -> rx.Component:   
     return rx.vstack(
         rx.heading(
@@ -10,8 +11,6 @@ def index() -> rx.Component:
             top="27vh",           
             left="50%",
             transform="translateX(-50%)",
-            
-            
             opacity=rx.cond(TextState.is_focused, "0", "1"), 
             transition="opacity 0.2s ease-in-out",
         ),
@@ -105,7 +104,7 @@ def index() -> rx.Component:
                 ),
                 
             ),
-            on_submit=TextState.send_to_ai,
+            on_submit=TextState.redirect,
             position="relative",
             width="600px",
             transform=rx.cond(TextState.is_focused, "translateY(-350%) scale(1.5)", "translateX(0) scale(1)"),
