@@ -1,13 +1,12 @@
 import reflex as rx
 from ..Backend.state import TextState
 from ..Backend.engine import generate_signal
+from ..Components.navbar import navbar
 
 
 class StockState(rx.State):
     current_price : float = 0.0
     signal : str = ""
-
-
 
     def analyze_stock(self):
         if not self.ticker: return
@@ -18,15 +17,15 @@ class StockState(rx.State):
         print(prediction)
 
 
-
-
-
-
-
-
 @rx.page(route="/stock/[ticker]", on_load= StockState.analyze_stock)
 def stock_dashboard():
     return rx.vstack(
+        rx.box(
+            navbar(),
+            position = "fixed",
+            top ="0",
+            width= "100%"
+            ),
         rx.heading(f"Analysis for {StockState.ticker}"),
         rx.card(
             rx.vstack(
@@ -39,7 +38,6 @@ def stock_dashboard():
             padding="2em",
             width="400px"
         ),
-        rx.button("Search Another Stock", on_click=rx.redirect("/"), margin_top="2em"),
         align_items="center",
-        padding_top="5em"
+        padding_top="10em",
     )
