@@ -7,6 +7,7 @@ from ..Components.navbar import navbar
 class StockState(rx.State):
     current_price : float = 0.0
     signal : str = ""
+    headline: str = ""
 
     def analyze_stock(self):
         if not self.ticker: return
@@ -14,6 +15,7 @@ class StockState(rx.State):
         prediction = generate_signal(self.ticker, "Massive fraud exposed, CEO arrested, company filing for immediate bankruptcy and delisting.")
         self.current_price = prediction["price"]
         self.signal = prediction["signal"]
+        self.headline = prediction["headline"]
         print(prediction)
 
 
@@ -34,6 +36,7 @@ def stock_dashboard():
                 rx.divider(),
                 rx.text("AI Prediction Signal:", font_weight="bold"),
                 rx.text(f"{StockState.signal}", color="blue", font_size="2em"),
+                rx.text(f"{StockState.headline}")
             ),
             padding="2em",
             width="400px"
