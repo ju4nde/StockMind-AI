@@ -10,11 +10,15 @@ class TextState(rx.State):
 
     @rx.event
     def redirect(self):
+        self.suggestions = []
+        self.is_focused = False
         return rx.redirect(f"/stock/{self.text}")
 
 
     @rx.event
     def click_suggestion(self, clicked_ticker: str):
+        self.suggestions = []
+        self.is_focused = False
         self.text = clicked_ticker
         return rx.redirect(f"/stock/{self.text}")
 

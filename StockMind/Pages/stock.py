@@ -12,7 +12,13 @@ class StockState(rx.State):
     def analyze_stock(self):
         if not self.ticker: return
 
-        prediction = generate_signal(self.ticker, "Massive fraud exposed, CEO arrested, company filing for immediate bankruptcy and delisting.")
+        prediction = generate_signal(self.ticker)
+        if "error" in prediction:
+            self.current_price = 0
+            self.signal = "none"
+            self.headline = "none"
+            return
+
         self.current_price = prediction["price"]
         self.signal = prediction["signal"]
         self.headline = prediction["headline"]
@@ -35,7 +41,14 @@ def stock_dashboard():
                 rx.text(f"${StockState.current_price}"),
                 rx.divider(),
                 rx.text("AI Prediction Signal:", font_weight="bold"),
-                rx.text(f"{StockState.signal}", color="blue", font_size="2em"),
+                rx.text(f"{StockState.signal}", color=rx.match(StockState.signal,
+                                                               ("BUY", "green"),
+                                                               ("SELL", "red"),
+                                                               ("HOLD", "blue"),
+                                                               "blue",
+                                                               ), 
+                                                font_size="2em"),
+
                 rx.text(f"{StockState.headline}")
             ),
             padding="2em",

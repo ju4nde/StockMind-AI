@@ -25,6 +25,55 @@ except FileNotFoundError:
     print("stockmind.joblib not found")
     ML_CLASSIFIER= None
 
+def get_news(ticker_symbol:str):
+    try:
+        ticker= yf.Ticker(ticker_symbol.upper())
+        news= ticker.news
+        if news:
+            organic_news = [
+                n for n in news 
+                if not n.get("content", {}).get("metadata", {}).get("editorsPick", False)
+            ]
+            valid_news = organic_news if organic_news else news
+            valid_news.sort(
+                key=lambda x: x.get("content", {}).get("pubDate", ""), 
+                reverse=True
+            )
+            article=valid_news[0]
+            article_content= article.get("content", {})
+            print(article_content)
+            if not article_content.get("description"):
+                title= article_content.get("title") or ""
+                summary = article_content.get("summary") or ""
+                raw_text = title + ". " + summary
+            else:
+                raw_text = article_content.get("description")
+            clean_description = re.sub(r'<[^>]+>', '', raw_text) if raw_text else "No recent news available."
+
+            return clean_description
+    
+    except Exception as e:
+        return "No news available"
+
+
+
+#Uses pandas-ta to calculate a 50-day Simple moving average
+def get_sma(ticker_symbol:str):
+    try:
+        ticker = yf.Ticker(ticker_symbol.upper())
+        df= ticker.history(period="6mo",interval="1d")
+
+        if df.empty:
+            return {"error": f"No 6 month-1 day interval data found for ticker {ticker}"}
+        
+        df.ta.sma(close="Close", length=50, append=True)
+        latest_row=df.iloc[-1]
+
+
+        return latest_row["SMA_50"]
+    
+    except Exception as e:
+        return {"error": f"An error occurred while processing data: {str(e)}"}
 
 
 def get_indicators(ticker_symbol: str) -> dict:
@@ -32,32 +81,31 @@ def get_indicators(ticker_symbol: str) -> dict:
     try:
         #this is to connect to yahoo finance and get live stock data
         ticker = yf.Ticker(ticker_symbol.upper())
-        df= ticker.history(period="1mo",interval="1h")
-        news = ticker.news
-        #print(news)
-        article= news[0]
-        #print(article)
-        article_content = article.get("content", {})
-        article_description= article_content.get("summary", "No summary available.")
-        clean_description = re.sub(r'<[^>]+>', '', article_description)
-
-
+        print("printing 1d and 1m")
+        df= ticker.history(period="1d",interval="1m")
         
         if df.empty:
             return {"error": f"No data found for ticker {ticker}"}
+
+        print(df)
+        
+        if len(df) < 50:
+            return {"error": "Not enough daily data to analyze stock"}
+        
         #Uses pandas-ta to calculate RSI(Relative strength index)
         df.ta.rsi(close="Close", length=14, append=True)
-        #Uses pandas-ta to calculate a 50-day Simple moving average
-        df.ta.sma(close="Close", length=50, append=True)
+        sma = get_sma(ticker_symbol)
+        clean_description=get_news(ticker_symbol)
 
-        #get the latest row
         latest_row= df.iloc[-1]
+
+
 
         metrics = {
             "ticker": ticker_symbol.upper(),
             "current_price": round(float(latest_row["Close"]), 2),
             "rsi": round(float(latest_row["RSI_14"]), 2) if not pd.isna(latest_row["RSI_14"]) else 50.0,
-            "sma_50": round(float(latest_row["SMA_50"]),2) if not pd.isna(latest_row["SMA_50"]) else float(latest_row["Close"]),
+            "sma_50": round(float(sma),2) if not pd.isna(sma) else float(latest_row["Close"]),
             "volume": int(latest_row["Volume"]),
             "headline": clean_description
         }
@@ -92,7 +140,7 @@ def analyze_sentiment(headline:str) -> float:
 
     
 
-def generate_signal(ticker_symbol: str, headline: str ) -> dict:
+def generate_signal(ticker_symbol: str) -> dict:
     ticker_data = get_indicators(ticker_symbol)
     if "error" in ticker_data:
         return ticker_data
