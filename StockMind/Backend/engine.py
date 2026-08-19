@@ -1,21 +1,18 @@
 import yfinance as yf
 import pandas as pd
 import pandas_ta as ta
-import torch
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
+import requests
 import numpy as np
 import joblib
 import os
 import re
+from dotenv import load_dotenv
 
+load_dotenv()
 
 
 current_dir = os.path.dirname(__file__)
 MODEL_PATH= os.path.join(current_dir,"stockmind.joblib")
-FINBERT_PATH = os.path.join(current_dir,"local_finbert")
-
-FINBERT_TOKENIZER = AutoTokenizer.from_pretrained(FINBERT_PATH)
-FINBERT_MODEL = AutoModelForSequenceClassification.from_pretrained(FINBERT_PATH)
 
 
 try:
@@ -118,17 +115,32 @@ def get_indicators(ticker_symbol: str) -> dict:
 
 
 def analyze_sentiment(headline:str) -> float:
+    hf_token = os.getenv("HF_API_KEY")
+
+    API_URL = "https://router.huggingface.co/hf-inference/models/ProsusAI/finbert"
+    
+    # Replace this with your actual token from HuggingFace!
+    headers = {f"Authorization": f"Bearer {hf_token}"} 
+    
+    payload = {"inputs": headline}
+
     try:
-        inputs = FINBERT_TOKENIZER(headline, return_tensors="pt",padding=True,truncation= True)
+        response = requests.post(API_URL, headers=headers, json=payload)
+        if response.status_code != 200:
+            print(f"HuggingFace API Error: {response.text}")
+            return 0.0
 
-        with torch.no_grad():
-            outputs = FINBERT_MODEL(**inputs)
+        results = response.json()[0]
         
-
-        predictions = torch.nn.functional.softmax(outputs.logits, dim=-1)
-        pos_prob = float(predictions[0][0])
-        neg_prob = float(predictions[0][1])
-        neu_prob = float(predictions[0][2])
+        pos_prob = 0.0
+        neg_prob = 0.0
+    
+        for sentiment in results:
+            if sentiment['label'] == 'positive':
+                pos_prob = sentiment['score']
+            elif sentiment['label'] == 'negative':
+                neg_prob = sentiment['score']
+        
         
         compound_score= pos_prob - neg_prob
 
@@ -173,5 +185,3 @@ def generate_signal(ticker_symbol: str) -> dict:
 
 if __name__ == "__main__":
     print("\n--- Testing Market Data Engine ---")
-    bad_news = "Antitrust lawsuit filed against Apple threatens App Store ecosystem."
-    print(generate_signal("AAPL", bad_news))

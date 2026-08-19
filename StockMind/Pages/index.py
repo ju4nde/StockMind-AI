@@ -6,12 +6,14 @@ def index() -> rx.Component:
     return rx.vstack(
         rx.heading(
             "Welcome to",
-            size="9",
+            font_size=["2rem", "3rem", "3.5rem"],
+            #size = "9",
+            line_height=["2.5", "1", "1"],
             position="absolute",
             top="27vh",           
             left="50%",
             transform="translateX(-50%)",
-            opacity=rx.cond(TextState.is_focused, "0", "1"), 
+            opacity=["1", "1",rx.cond(TextState.is_focused, "0", "1")], 
             transition="opacity 0.2s ease-in-out",
         ),
 
@@ -21,24 +23,27 @@ def index() -> rx.Component:
             rx.text.span("M", color="#6a27a8"),
             "ind ",
             rx.text.span("AI", color="#6a27a8"),
-            size="9",          
+            font_size=["2rem", "3rem", "3.5rem"],
+            line_height=["0", "1", "1"],
+            #size = "9",        
             weight="bold",
   
             position="absolute", 
             transition="all 0.5s ease-in-out", 
-            top=rx.cond(TextState.is_focused, "0px", "35vh"),
-            left=rx.cond(TextState.is_focused, "0", "50%"),
-            transform=rx.cond(TextState.is_focused, "translateX(-20%) scale(0.5)", "translateX(-50%) scale(1)"),
+            top=["35vh", "35vh", rx.cond(TextState.is_focused, "0px", "35vh")],
+            left=["50%", "50%", rx.cond(TextState.is_focused, "0", "50%")],
+            transform=["translateX(-50%) scale(1)", "translateX(-50%) scale(1)", rx.cond(TextState.is_focused, "translateX(-20%) scale(0.5)", "translateX(-50%) scale(1)")],
             z_index="10",
         ),
         
         rx.text(
             "To start, search for a symbol below.", 
-            size="5", 
+            #size="5",
+            font_size=["1rem", "1.5rem", "1.5rem"], 
             color="gray",
             text_align="center",
 
-            opacity=rx.cond(TextState.is_focused, "0", "1"), 
+            opacity=["1", "1", rx.cond(TextState.is_focused, "0", "1")],
             transition="opacity 0.2s ease-in-out",
         ),
         
@@ -104,8 +109,12 @@ def index() -> rx.Component:
             ),
             on_submit=TextState.redirect,
             position="relative",
-            width="600px",
-            transform=rx.cond(TextState.is_focused, "translateY(-350%) scale(1.5)", "translateX(0) scale(1)"),
+            width=["300px","400px","600px", "600px"],
+            transform=[
+                "translateX(0) scale(1)", # Mobile: Always locked
+                "translateX(0) scale(1)", # Tablet: Always locked
+                rx.cond(TextState.is_focused, "translateY(-350%) scale(1.5)", "translateX(0) scale(1)") # Desktop: Animates!
+            ],
             transition="transform 0.5s ease-in-out",
         ),
         

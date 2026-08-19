@@ -1,6 +1,10 @@
-transformers
-torch
+reflex
 yfinance
-pandas
-pandas-ta
+pandas_ta
+torch
+transformers
 scikit-learn
+joblib
+numpy
+pandas
+python-dotenv
