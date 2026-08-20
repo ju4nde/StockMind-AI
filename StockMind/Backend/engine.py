@@ -37,8 +37,10 @@ def get_news(ticker_symbol:str):
                 reverse=True
             )
             article=valid_news[0]
+            print(article)
             article_content= article.get("content", {})
-            print(article_content)
+            link_data = article_content.get("canonicalUrl", {}).get("url", {})
+            #print(article_content)
             if not article_content.get("description"):
                 title= article_content.get("title") or ""
                 summary = article_content.get("summary") or ""
@@ -47,7 +49,11 @@ def get_news(ticker_symbol:str):
                 raw_text = article_content.get("description")
             clean_description = re.sub(r'<[^>]+>', '', raw_text) if raw_text else "No recent news available."
 
-            return clean_description
+            response = {
+                "description": clean_description,
+                "link": link_data
+            }
+            return response
     
     except Exception as e:
         return "No news available"
@@ -104,7 +110,8 @@ def get_indicators(ticker_symbol: str) -> dict:
             "rsi": round(float(latest_row["RSI_14"]), 2) if not pd.isna(latest_row["RSI_14"]) else 50.0,
             "sma_50": round(float(sma),2) if not pd.isna(sma) else float(latest_row["Close"]),
             "volume": int(latest_row["Volume"]),
-            "headline": clean_description
+            "headline": clean_description["description"],
+            "link": clean_description["link"]
         }
 
         metrics["trend"] = "Uptrend" if metrics["current_price"] > metrics["sma_50"] else "Downtrend"
@@ -158,23 +165,25 @@ def generate_signal(ticker_symbol: str) -> dict:
         return ticker_data
     
     sentiment_score= analyze_sentiment(ticker_data["headline"])
-    trend_flag= 1 if ticker_data["trend"] == "Uptrend" else 0
+    trend_flag= 1 if ticker_data["trend"] == "Uptrend" else -1 if ticker_data["trend"] == "Downtrend" else 0
     live_features= np.array([[ticker_data["rsi"],sentiment_score, trend_flag]])
     prediction = ML_CLASSIFIER.predict(live_features)[0]
     confidence = ML_CLASSIFIER.predict_proba(live_features)[0]
 
-    signal_map={1:"BUY", -1: "SELL", 0: "HOLD"}
+    signal_map={1:"BUY", -1: "SHORT", 0: "HOLD"}
 
     return {
         "ticker": ticker_data["ticker"],
         "price": ticker_data["current_price"],
         "rsi": ticker_data["rsi"],
+        "sma_50": ticker_data["sma_50"],
         "trend": ticker_data["trend"],
         "sentiment": sentiment_score,
         "signal": signal_map[prediction],
         "confidence_sell": round(float(confidence[0]),2),
         "confidence_hold":round(float(confidence[1]),2),
         "headline": ticker_data["headline"],
+        "link": ticker_data["link"],
         "confidence_buy":round(float(confidence[2]),2)
     }
 
@@ -185,3 +194,8 @@ def generate_signal(ticker_symbol: str) -> dict:
 
 if __name__ == "__main__":
     print("\n--- Testing Market Data Engine ---")
+
+
+
+
+

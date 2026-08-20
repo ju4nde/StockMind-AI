@@ -7,5 +7,9 @@ from .Pages.stock import stock_dashboard
 load_dotenv()
 stock_api_key = os.getenv("STOCKS_API_KEY")
 
-app = rx.App()
+app = rx.App(
+    theme=rx.theme(
+        appearance="dark",
+    )
+)
 app.add_page(index, route="/") 
