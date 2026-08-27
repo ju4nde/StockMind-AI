@@ -11,17 +11,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-current_dir = os.path.dirname(__file__)
-MODEL_PATH= os.path.join(current_dir,"stockmind.joblib")
-
-
-try:
-    ML_CLASSIFIER = joblib.load(MODEL_PATH)
-    print("Model succesfully loaded")
-except FileNotFoundError:
-    print("stockmind.joblib not found")
-    ML_CLASSIFIER= None
-
 def get_news(ticker_symbol:str):
     try:
         ticker= yf.Ticker(ticker_symbol.upper())
@@ -164,29 +153,38 @@ def generate_signal(ticker_symbol: str) -> dict:
     if "error" in ticker_data:
         return ticker_data
     
+    
     sentiment_score= analyze_sentiment(ticker_data["headline"])
     trend_flag= 1 if ticker_data["trend"] == "Uptrend" else -1 if ticker_data["trend"] == "Downtrend" else 0
-    live_features= np.array([[ticker_data["rsi"],sentiment_score, trend_flag]])
-    prediction = ML_CLASSIFIER.predict(live_features)[0]
-    confidence = ML_CLASSIFIER.predict_proba(live_features)[0]
-
-    signal_map={1:"BUY", -1: "SHORT", 0: "HOLD"}
-
-    return {
-        "ticker": ticker_data["ticker"],
-        "price": ticker_data["current_price"],
+    api_url= "http://127.0.0.1:8080/predict"
+    payload= {
         "rsi": ticker_data["rsi"],
-        "sma_50": ticker_data["sma_50"],
-        "trend": ticker_data["trend"],
         "sentiment": sentiment_score,
-        "signal": signal_map[prediction],
-        "confidence_sell": round(float(confidence[0]),2),
-        "confidence_hold":round(float(confidence[1]),2),
-        "headline": ticker_data["headline"],
-        "link": ticker_data["link"],
-        "confidence_buy":round(float(confidence[2]),2)
+        "trend": trend_flag
     }
-
+    try:
+        response= requests.post(api_url, json=payload)
+        if response.status_code != 200:
+            return {"error": f"Prediction API Error: {response.text}"}
+        data= response.json()
+        return {
+            "ticker": ticker_data["ticker"],
+            "price": ticker_data["current_price"],
+            "rsi": ticker_data["rsi"],
+            "sma_50": ticker_data["sma_50"],
+            "trend": ticker_data["trend"],
+            "sentiment": sentiment_score,
+            "signal": data.get("signal"),
+            "confidence_sell": data.get("confidence_sell"),
+            "confidence_hold": data.get("confidence_hold"),
+            "headline": ticker_data["headline"],
+            "link": ticker_data["link"],
+            "confidence_buy": data.get("confidence_buy")
+        }
+    except requests.exceptions.ConnectionError:
+        return {"error": "Failed to connect to the prediction API. Ensure the API server is running."}
+    except Exception as e:
+        return {"error": f"An unexpected error occurred: {str(e)}"}
 
 
 

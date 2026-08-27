@@ -11,7 +11,9 @@ def navbar():
             "ind ",
             rx.text.span("AI", color="#6a27a8"),        
             weight="bold",
-            size="7",
+            font_size=["1.5rem", "3rem", "1.9rem"],
+            line_height=["1.5", "1", "1.2"],
+            white_space="nowrap",
         ),
         
         # 2. SEARCH BAR FORM (Now a direct child of the main navbar)
@@ -23,7 +25,7 @@ def navbar():
                 height="40px",
                 border_width="1.5px",
                 border_radius=rx.cond(TextState.suggestions, "20px 20px 0px 0px", "20px"),
-                font_size="1em",
+                font_size=["0.75rem", "1rem", "1rem"],
                 border_color="#6a27a8",
                 color="white",
                 position="relative",         
@@ -84,6 +86,7 @@ def navbar():
             on_click=rx.redirect("/"),
             _hover={"cursor": "pointer"},
             stroke_width=1,
+            flex_shrink=0,  # Prevent the icon from shrinking on smaller screens
         ),
         
         # OUTER NAVBAR SETTINGS
